@@ -2,6 +2,7 @@ from urllib.parse import urlparse
 from pymongo import MongoClient
 from bs4 import BeautifulSoup
 import requests
+import dateparser
 
 
 class MagnitParser:
@@ -101,6 +102,7 @@ class MagnitParser:
                     attrs={'class': date_structure[1]}
                 ), date_structure[2]
             ).replace('с ', '').split(' по ')[date_structure[3]]
+            date = dateparser.parse(date)
             return date
         except Exception:
             date = None
