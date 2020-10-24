@@ -31,7 +31,7 @@ class GBParse:
                     all_links.append(f'{self._url.scheme}://{self._url.hostname}{link.attrs["href"]}')
         return all_links
 
-    def get_info_from_link(self, links: list):
+    def get_info_from_link(self):
         links = self.get_post_links()
         for link in links:
             soup = self.get_soup(link, params={})
@@ -43,20 +43,21 @@ class GBParse:
         writer_info = post_soup.find('div', attrs={'class': 'row m-t'})
         writer = getattr(writer_info.find('div', attrs={'itemprop': 'author'}), 'text')
         writer_url = f'{self._url.scheme}://{self._url.hostname}{writer_info.contents[0].contents[0].attrs["href"]}'
-        return writer, writer_url
+        print(writer, writer_url, sep='\n')
 
     def get_post(self, post_soup, link):
         post_info = getattr(post_soup.find('h1', attrs={'class': 'blogpost-title'}), 'text')[1:-1]
         post_datetime = post_soup.find('time')['datetime']
-        post_img = post_soup.find('img')
+        post_img = post_soup.find('img').attrs['src']
         post_link = link
-        return post_info, post_datetime, post_img
+        print(post_info, post_datetime, post_img, post_link, sep='\n')
 
     def get_tag(self, post_soup):
         all_tags = post_soup.findAll('a', attrs={'class': 'small'})
         for tag in all_tags:
             tag_name = getattr(tag, 'text')
             tag_url = f'{self._url.scheme}://{self._url.hostname}{tag.attrs["href"]}'
+            print(tag_name, tag_url, sep='\n')
 
     def get_comment(self):
         pass
@@ -65,4 +66,4 @@ class GBParse:
 if __name__ == '__main__':
     gb_posts_url = 'https://geekbrains.ru/posts?page='
     gb = GBParse(gb_posts_url)
-
+    gb.get_info_from_link()
