@@ -46,7 +46,7 @@ class GBParse:
         print(writer, writer_url, sep='\n')
 
     def get_post(self, post_soup, link):
-        post_info = getattr(post_soup.find('h1', attrs={'class': 'blogpost-title'}), 'text')[1:-1]
+        post_info = getattr(post_soup.find('h1', attrs={'class': 'blogpost-title'}), 'text')
         post_datetime = post_soup.find('time')['datetime']
         post_img = post_soup.find('img').attrs['src']
         post_link = link

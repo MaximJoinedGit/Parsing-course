@@ -1,8 +1,9 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, insert
 from sqlalchemy.orm import sessionmaker
 import gb_models
 from bs4 import BeautifulSoup
 import requests
+import dateparser
 from urllib.parse import urlparse
 
 engine = create_engine('sqlite:///gb_blog.db')
@@ -44,38 +45,42 @@ class GBParse:
         links = self.get_post_links()
         for link in links:
             soup = self.get_soup(link, params={})
-            self.get_writer(soup)
-            self.get_post(soup, link)
-            self.get_tag(soup)
+            self.get_writer(soup, link)
+            # self.get_post(soup, link)
+            # self.get_tag(soup)
 
-    def get_writer(self, post_soup):
+    def get_writer(self, post_soup, link):
         writer_info = post_soup.find('div', attrs={'class': 'row m-t'})
         writer = getattr(writer_info.find('div', attrs={'itemprop': 'author'}), 'text')
         writer_url = f'{self._url.scheme}://{self._url.hostname}{writer_info.contents[0].contents[0].attrs["href"]}'
-        writer_add = gb_models.Writer(name=writer, url=writer_url)
-        db.add(writer_add)
-        db.commit()
-        print("Item done")
-
-    def get_post(self, post_soup, link):
-        post_info = getattr(post_soup.find('h1', attrs={'class': 'blogpost-title'}), 'text')[1:-1]
-        post_datetime = post_soup.find('time')['datetime']
-        post_img = post_soup.find('img')
+        new_writer = db.query(gb_models.Writer).filter_by(url=writer_url)
+        if not new_writer.value('id'):
+            writer_add = gb_models.Writer(name=writer, url=writer_url)
+            db.add(writer_add)
+            print(f'Item {writer} done')
+        post_info = getattr(post_soup.find('h1', attrs={'class': 'blogpost-title'}), 'text')
+        post_datetime = dateparser.parse(post_soup.find('time')['datetime'])
+        post_img = post_soup.find('img').attrs['src']
         post_link = link
-        post_add = gb_models.Post(url=post_link, header=post_info, date=post_datetime, img_url=post_img)
-        db.add(post_add)
-        db.commit()
-        print('Item done')
-
-    def get_tag(self, post_soup):
+        post_writer_id = db.query(gb_models.Writer).filter_by(url=writer_url)
+        new_post = db.query(gb_models.Post).filter_by(url=post_link)
+        if not new_post.value('id'):
+            post_add = gb_models.Post(url=post_link, header=post_info, date=post_datetime, img_url=post_img,
+                                      writer_id=post_writer_id.value('id'))
+            db.add(post_add)
+            print(f'Item post "{post_info}" done')
         all_tags = post_soup.findAll('a', attrs={'class': 'small'})
         for tag in all_tags:
             tag_name = getattr(tag, 'text')
             tag_url = f'{self._url.scheme}://{self._url.hostname}{tag.attrs["href"]}'
-            tag_add = gb_models.Tag(name=tag_name, url=tag_url)
-            db.add(tag_add)
-            db.commit()
-            print('Item done')
+            new_tag = db.query(gb_models.Tag).filter_by(url=tag_url)
+            if not new_tag.value('id'):
+                tag_add = gb_models.Tag(name=tag_name, url=tag_url)
+                db.add(tag_add)
+                print(f'Item {tag_name} done')
+            tag_post_query = insert(gb_models.tag_post).values(post_id=new_post.value('id'), tag_id=new_tag.value('id'))
+            db.execute(tag_post_query)
+        db.commit()
 
     def get_comment(self):
         pass
