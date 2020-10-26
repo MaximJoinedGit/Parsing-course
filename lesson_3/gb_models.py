@@ -31,7 +31,7 @@ class Post(Base):
     __tablename__ = 'post'
     id = Column(Integer, autoincrement=True, primary_key=True)
     url = Column(String, unique=True, nullable=False)
-    header = Column(String, unique=True, nullable=True)
+    header = Column(String, unique=False, nullable=True)
     date = Column(DateTime, unique=False, nullable=False)
     img_url = Column(String, unique=False, nullable=True)
     writer_id = Column(Integer, ForeignKey('writer.id'))
