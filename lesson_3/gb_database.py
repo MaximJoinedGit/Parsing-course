@@ -45,11 +45,9 @@ class GBParse:
         links = self.get_post_links()
         for link in links:
             soup = self.get_soup(link, params={})
-            self.get_writer(soup, link)
-            # self.get_post(soup, link)
-            # self.get_tag(soup)
+            self.get_info(soup, link)
 
-    def get_writer(self, post_soup, link):
+    def get_info(self, post_soup, link):
         writer_info = post_soup.find('div', attrs={'class': 'row m-t'})
         writer = getattr(writer_info.find('div', attrs={'itemprop': 'author'}), 'text')
         writer_url = f'{self._url.scheme}://{self._url.hostname}{writer_info.contents[0].contents[0].attrs["href"]}'
@@ -81,9 +79,29 @@ class GBParse:
             tag_post_query = insert(gb_models.tag_post).values(post_id=new_post.value('id'), tag_id=new_tag.value('id'))
             db.execute(tag_post_query)
         db.commit()
-
-    def get_comment(self):
-        pass
+        page_id = post_soup.find('div', attrs={'class': 'm-t-lg'}).findChild('div')['data-minifiable-id']
+        comment_link = 'https://geekbrains.ru/api/v2/comments?commentable_type=Post&commentable_id=&order=desc'
+        comment_params = {'commentable_id': page_id}
+        comments = requests.get(comment_link, params=comment_params)
+        if not comments.json() == []:
+            for comment in range(len(comments.json())):
+                comment_text = comments.json()[comment]['comment']['body']
+                comment_writer_url = comments.json()[0]['comment']['user']['url']
+                comment_writer = comments.json()[0]['comment']['user']['full_name']
+                writer_exists = db.query(gb_models.Writer).filter_by(url=comment_writer_url)
+                post_comment_id = db.query(gb_models.Post).filter_by(url=post_link)
+                while not writer_exists.value('id'):
+                    writer_add = gb_models.Writer(name=comment_writer, url=comment_writer_url)
+                    db.add(writer_add)
+                    print(f'Item {writer} done')
+                    db.commit()
+                    writer_exists = db.query(gb_models.Writer).filter_by(url=comment_writer_url)
+                if writer_exists:
+                    comment_add = gb_models.Comment(text=comment_text, writer_id=writer_exists.value('id'),
+                                                    post_id=post_comment_id.value('id'))
+                    db.add(comment_add)
+                    print(f'Item {comment_text} done')
+                    db.commit()
 
 
 if __name__ == '__main__':
