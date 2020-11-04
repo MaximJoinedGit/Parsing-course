@@ -8,10 +8,6 @@ def get_author_url(itm):
     return 'https://hh.ru' + itm
 
 
-def get_employer_specs(itm):
-    return itm
-
-
 class HhVacanciesLoader(ItemLoader):
     default_item_class = HhVacanciesItem
     vacancy_name_out = TakeFirst()
@@ -30,6 +26,5 @@ class HhEmployerLoader(ItemLoader):
     employer_name_in = ''.join
     employer_name_out = TakeFirst()
     employer_url_out = TakeFirst()
-    employer_spec_out = MapCompose(get_employer_specs)
     employer_description_in = ''.join
     employer_description_out = TakeFirst()
