@@ -5,8 +5,11 @@ from .items import HhVacanciesItem, HhEmployersItem
 
 
 def get_author_url(itm):
-    result = 'https://hh.ru' + itm
-    return result
+    return 'https://hh.ru' + itm
+
+
+def get_employer_specs(itm):
+    return itm
 
 
 class HhVacanciesLoader(ItemLoader):
@@ -24,7 +27,9 @@ class HhVacanciesLoader(ItemLoader):
 
 class HhEmployerLoader(ItemLoader):
     default_item_class = HhEmployersItem
-    # employer_name =
-    # employer_url =
-    # employer_spec =
-    # employer_description =
+    employer_name_in = ''.join
+    employer_name_out = TakeFirst()
+    employer_url_out = TakeFirst()
+    employer_spec_out = MapCompose(get_employer_specs)
+    employer_description_in = ''.join
+    employer_description_out = TakeFirst()
