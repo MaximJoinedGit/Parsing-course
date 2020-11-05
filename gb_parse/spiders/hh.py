@@ -33,19 +33,14 @@ class HhSpider(scrapy.Spider):
 
     def vacancy_parse(self, response, **kwargs):
         vacancy_loader = HhVacanciesLoader(response=response)
-        vacancy_loader.add_xpath('vacancy_name', self.vacancy_xpath['vacancy_name'])
-        vacancy_loader.add_xpath('vacancy_salary', self.vacancy_xpath['vacancy_salary'])
-        vacancy_loader.add_xpath('vacancy_description', self.vacancy_xpath['vacancy_description'])
-        vacancy_loader.add_xpath('vacancy_skills', self.vacancy_xpath['vacancy_skills'])
-        vacancy_loader.add_xpath('vacancy_author_url', self.vacancy_xpath['vacancy_author_url'])
+        for key, value in self.vacancy_xpath:
+            vacancy_loader.add_xpath(key, value)
         yield vacancy_loader.load_item()
 
     def employer_parse(self, response, **kwargs):
         employer_loader = HhEmployerLoader(response=response)
-        employer_loader.add_xpath('employer_name', self.employer_xpath['employer_name'])
-        employer_loader.add_xpath('employer_url', self.employer_xpath['employer_url'])
-        employer_loader.add_xpath('employer_spec', self.employer_xpath['employer_spec'])
-        employer_loader.add_xpath('employer_description', self.employer_xpath['employer_description'])
+        for key, value in self.employer_xpath:
+            employer_loader.add_xpath(key, value)
         yield employer_loader.load_item()
         for url in response.xpath(self.employer_xpath['employer_vacancies']):
             yield response.follow(url, callback=self.parse)
