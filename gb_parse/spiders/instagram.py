@@ -19,7 +19,7 @@ class InstagramSpider(scrapy.Spider):
 
     def __init__(self, login, enc_password, *args, **kwargs):
         self.tags = ['python', 'time', 'sky']
-        self.users = ['usual_flairs']
+        self.users = ['usual_flairs', 'nasa', 'nytimes']
         self.login = login
         self.enc_passwd = enc_password
         super().__init__(*args, **kwargs)
