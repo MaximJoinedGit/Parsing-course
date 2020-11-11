@@ -29,8 +29,30 @@ class HhEmployersItem(scrapy.Item):
     employer_description = scrapy.Field()
 
 
-class Instagram(scrapy.Item):
+class InstagramPosts(scrapy.Item):
     _id = scrapy.Field()
     date_parse = scrapy.Field()
     data = scrapy.Field()
     img = scrapy.Field()
+
+
+class InstagramUser(scrapy.Item):
+    _id = scrapy.Field()
+    date_parse = scrapy.Field()
+    data = scrapy.Field()
+
+
+class InstagramUserFollow(scrapy.Item):
+    _id = scrapy.Field()
+    user_id = scrapy.Field()
+    user_name = scrapy.Field()
+    follower_id = scrapy.Field()
+    follower_name = scrapy.Field()
+
+
+class InstagramUserFollowing(scrapy.Item):
+    _id = scrapy.Field()
+    user_id = scrapy.Field()
+    user_name = scrapy.Field()
+    following_id = scrapy.Field()
+    following_name = scrapy.Field()
