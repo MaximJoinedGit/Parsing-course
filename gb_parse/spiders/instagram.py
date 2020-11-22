@@ -1,7 +1,7 @@
 import scrapy
 import json
 import datetime
-from ..items import InstagramPosts, InstagramUser, InstagramUserFollow, InstagramUserFollowing
+from ..items import InstagramPosts, InstagramUser, InstagramUserFollow
 
 
 class InstagramSpider(scrapy.Spider):
@@ -124,19 +124,12 @@ class InstagramSpider(scrapy.Spider):
     @staticmethod
     def following_or_followers_item(user_data, follow_data, edge):
         for user in follow_data[edge]['edges']:
-            if edge == 'edge_followed_by':
+            if edge == 'edge_followed_by' or edge == 'edge_follow':
                 yield InstagramUserFollow(
                     user_id=user_data['id'],
                     user_name=user_data['username'],
                     follower_id=user['node']['id'],
                     follower_name=user['node']['username'],
-                )
-            elif edge == 'edge_follow':
-                yield InstagramUserFollowing(
-                    user_id=user_data['id'],
-                    user_name=user_data['username'],
-                    following_id=user['node']['id'],
-                    following_name=user['node']['username'],
                 )
             else:
                 pass
