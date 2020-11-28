@@ -5,10 +5,10 @@
 
 
 # useful for handling different item types with a single interface
-from itemadapter import ItemAdapter
 from pymongo import MongoClient
 from scrapy import Request
 from scrapy.pipelines.images import ImagesPipeline
+from scrapy.exceptions import DropItem, CloseSpider
 
 
 class GbparsePipeline:
@@ -19,8 +19,28 @@ class GbparsePipeline:
 
     def process_item(self, item, spider):
         collection = self.db[item.__class__.__name__]
-        collection.insert_one(item)
-        return item
+        try:
+            user_info = self.db.InstagramUser.find_one({'data.username': item['data']['username']})
+            if not user_info:
+                collection.insert_one(item)
+                return item
+            else:
+                raise DropItem(f'The user already exists')
+        except KeyError:
+            try:
+                path = item['path']
+                if not item['start_user'] in path:
+                    while not item['start_user'] in path:
+                        next_point = self.db.InstagramParentItem.find_one({'user': path[0]})
+                        path.appendleft(next_point['parent_user'])
+                    item['path'] = list(path)
+                    print(item['path'])
+                    collection.insert_one(item)
+                else:
+                    raise CloseSpider(reason='Done')
+            except KeyError:
+                collection.insert_one(item)
+                return item
 
 
 class GbparseImagesPipeline(ImagesPipeline):
