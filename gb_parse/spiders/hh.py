@@ -20,7 +20,6 @@ class HhSpider(scrapy.Spider):
         'employer_url': '//a[@data-qa="sidebar-company-site"]/@href',
         'employer_spec': '//div[@class="employer-sidebar-block"]//p/text()',
         'employer_description': '//div[@class="g-user-content"]//text()',
-        'employer_vacancies': '//a[@data-qa="employer-page__employer-vacancies-link"]/@href',
     }
 
     def parse(self, response, **kwargs):
@@ -42,5 +41,5 @@ class HhSpider(scrapy.Spider):
         for k, val in self.employer_xpath.items():
             employer_loader.add_xpath(k, val)
         yield employer_loader.load_item()
-        for url in response.xpath(self.employer_xpath['employer_vacancies']):
+        for url in response.xpath('//a[@data-qa="employer-page__employer-vacancies-link"]/@href'):
             yield response.follow(url, callback=self.parse)

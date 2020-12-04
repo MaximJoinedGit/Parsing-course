@@ -1,7 +1,8 @@
 import scrapy
 import json
 import datetime
-from ..items import InstagramPosts, InstagramUser, InstagramUserFollow
+from collections import deque
+from ..items import InstagramPosts, InstagramUser, InstagramPathItem, InstagramParentItem
 
 
 class InstagramSpider(scrapy.Spider):
@@ -22,6 +23,12 @@ class InstagramSpider(scrapy.Spider):
         self.users = ['usual_flairs', 'nasa', 'nytimes']
         self.login = login
         self.enc_passwd = enc_password
+        self.first_user = 'teslamotors'
+        self.last_user = 'minimal_duck'
+        self.users_deque = deque([self.first_user])
+        self.path = deque()
+        self.followers_set = set()
+        self.following_set = set()
         super().__init__(*args, **kwargs)
 
     @staticmethod
@@ -53,9 +60,16 @@ class InstagramSpider(scrapy.Spider):
         except AttributeError:
             if response.json().get('authenticated'):
                 # for tag in self.tags:
-                    # yield response.follow(f'/explore/tags/{tag}/', callback=self.tag_parse)
-                for user in self.users:
-                    yield response.follow(f'/{user}/', callback=self.user_parse)
+                # yield response.follow(f'/explore/tags/{tag}/', callback=self.tag_parse)
+                yield from self.get_users_deque_parse(response)
+
+    def get_users_deque_parse(self, response):
+        while self.users_deque:
+            user = self.users_deque.pop()
+            self.followers_set.clear()
+            self.following_set.clear()
+            yield response.follow(f'/{user}/', callback=self.user_parse,
+                                  cb_kwargs={'param': user, })
 
     def tag_parse(self, response):
         tag = self.js_data_extract(response)['entry_data']['TagPage'][0]['graphql']['hashtag']
@@ -87,12 +101,11 @@ class InstagramSpider(scrapy.Spider):
 
     def user_parse(self, response, **kwargs):
         user_data = self.js_data_extract(response)['entry_data']['ProfilePage'][0]['graphql']['user']
-        yield InstagramUser(date_parse=datetime.datetime.now(),
-                            data=user_data,
-                            )
+        yield InstagramUser(date_parse=datetime.datetime.now(), data=user_data)
         yield from self.get_following_followers_api(response, user_data, self.query_hash['followers'],
                                                     'edge_followed_by')
-        yield from self.get_following_followers_api(response, user_data, self.query_hash['following'], 'edge_follow')
+        yield from self.get_following_followers_api(response, user_data, self.query_hash['following'],
+                                                    'edge_follow')
 
     def get_following_followers_api(self, response, user_data, query_hash, edge, variables=None):
         if not variables:
@@ -120,20 +133,44 @@ class InstagramSpider(scrapy.Spider):
                 }
                 yield from self.get_following_followers_api(response, kwargs['user_data'], kwargs['query_hash'],
                                                             kwargs['edge'], variables)
+            else:
+                yield from self.get_result_set(kwargs['user_data']['username'], response)
 
-    @staticmethod
-    def following_or_followers_item(user_data, follow_data, edge):
+    def following_or_followers_item(self, user_data, follow_data, edge):
         for user in follow_data[edge]['edges']:
-            if edge == 'edge_followed_by' or edge == 'edge_follow':
-                yield InstagramUserFollow(
-                    user_id=user_data['id'],
-                    user_name=user_data['username'],
-                    follower_id=user['node']['id'],
-                    follower_name=user['node']['username'],
+            if edge == 'edge_followed_by':
+                self.followers_set.add(user['node']['username'])
+                # yield InstagramUserFollow(
+                #     user_id=user_data['id'],
+                #     user_name=user_data['username'],
+                #     follower_id=user['node']['id'],
+                #     follower_name=user['node']['username'],
+                # )
+            elif edge == 'edge_follow':
+                self.following_set.add(user['node']['username'])
+                # yield InstagramUserFollow(
+                #     user_id=user_data['id'],
+                #     user_name=user_data['username'],
+                #     follower_id=user['node']['id'],
+                #     follower_name=user['node']['username'],
+                # )
+                yield InstagramParentItem(
+                    user=user['node']['username'],
+                    parent_user=user_data['username'],
                 )
             else:
                 pass
-            yield InstagramUser(
-                date_parse=datetime.datetime.now(),
-                data=user['node'],
-            )
+
+    def get_result_set(self, username, response):
+        result_set = self.followers_set.intersection(self.following_set)
+        if self.last_user in result_set:
+            self.users_deque.clear()
+            self.path.append(username)
+            self.path.append(self.last_user)
+            yield InstagramPathItem(start_user=self.first_user,
+                                    target_user=self.last_user,
+                                    path=self.path,
+                                    )
+        else:
+            self.users_deque.extendleft(list(result_set))
+            yield from self.get_users_deque_parse(response)
