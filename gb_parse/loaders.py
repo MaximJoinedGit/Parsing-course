@@ -30,7 +30,7 @@ class HhEmployerLoader(ItemLoader):
     employer_description_out = TakeFirst()
 
 
-class InstagramLoader(ItemLoader):
+class InstagramImageLoader(ItemLoader):
     date_parse = TakeFirst()
     data = TakeFirst()
     img = TakeFirst()

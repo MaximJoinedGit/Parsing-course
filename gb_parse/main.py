@@ -16,6 +16,6 @@ if __name__ == '__main__':
     crawl_settings.setmodule(settings)
     crawl_proc = CrawlerProcess(settings=crawl_settings)
     # crawl_proc.crawl(YoulaSpider)
-    # crawl_proc.crawl(HhSpider)
-    crawl_proc.crawl(InstagramSpider, login=os.getenv('USERNAME'), enc_password=os.getenv('ENC_PASSWORD'))
+    crawl_proc.crawl(HhSpider)
+    # crawl_proc.crawl(InstagramSpider, login=os.getenv('USERNAME'), enc_password=os.getenv('ENC_PASSWORD'))
     crawl_proc.start()
