@@ -39,8 +39,8 @@ class HhSpider(scrapy.Spider):
 
     def employer_parse(self, response, **kwargs):
         employer_loader = HhEmployerLoader(response=response)
-        for k, val in self.employer_xpath.keys():
-            employer_loader.add_xpath(k, val)
+        for key, value in self.employer_xpath:
+            employer_loader.add_xpath(key, value)
         yield employer_loader.load_item()
         for url in response.xpath(self.employer_xpath['employer_vacancies']):
             yield response.follow(url, callback=self.parse)
