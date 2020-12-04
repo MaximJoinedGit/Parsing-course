@@ -1,5 +1,5 @@
 # from scrapy import Selector
-from itemloaders.processors import TakeFirst, MapCompose, Join
+from itemloaders.processors import TakeFirst, MapCompose
 from scrapy.loader import ItemLoader
 from .items import HhVacanciesItem, HhEmployersItem
 
@@ -28,3 +28,9 @@ class HhEmployerLoader(ItemLoader):
     employer_url_out = TakeFirst()
     employer_description_in = ''.join
     employer_description_out = TakeFirst()
+
+
+class InstagramLoader(ItemLoader):
+    date_parse = TakeFirst()
+    data = TakeFirst()
+    img = TakeFirst()

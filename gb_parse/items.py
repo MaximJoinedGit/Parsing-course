@@ -27,3 +27,10 @@ class HhEmployersItem(scrapy.Item):
     employer_url = scrapy.Field()
     employer_spec = scrapy.Field()
     employer_description = scrapy.Field()
+
+
+class Instagram(scrapy.Item):
+    _id = scrapy.Field()
+    date_parse = scrapy.Field()
+    data = scrapy.Field()
+    img = scrapy.Field()
