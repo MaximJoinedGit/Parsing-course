@@ -33,14 +33,14 @@ class HhSpider(scrapy.Spider):
 
     def vacancy_parse(self, response, **kwargs):
         vacancy_loader = HhVacanciesLoader(response=response)
-        for key, value in self.vacancy_xpath:
+        for key, value in self.vacancy_xpath.items():
             vacancy_loader.add_xpath(key, value)
         yield vacancy_loader.load_item()
 
     def employer_parse(self, response, **kwargs):
         employer_loader = HhEmployerLoader(response=response)
-        for key, value in self.employer_xpath:
-            employer_loader.add_xpath(key, value)
+        for k, val in self.employer_xpath.items():
+            employer_loader.add_xpath(k, val)
         yield employer_loader.load_item()
         for url in response.xpath(self.employer_xpath['employer_vacancies']):
             yield response.follow(url, callback=self.parse)
